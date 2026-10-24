@@ -1,1 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Canvas Caffe | Digital Menu</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#faf5ec;color:#30251e;font-family:Arial,sans-serif}
+header{background:#513725;color:white;text-align:center;padding:30px 15px}
+header h1{font-family:Georgia,serif;font-size:34px;margin:0}
+header p{margin:8px 0 0;color:#ead8c2}
+main{max-width:760px;margin:auto;padding:18px}
+.card{background:white;border-radius:14px;padding:18px;margin:14px 0;box-shadow:0 3px 12px #0000000d}
+h2{font-family:Georgia,serif;color:#513725}
+.item{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid #eee2d5;padding:13px 0}
+.item:last-child{border:0}
+.price{font-weight:bold;color:#70492e;white-space:nowrap}
+button{border:0;border-radius:8px;padding:11px 14px;background:#70492e;color:white;font-weight:bold;cursor:pointer}
+.qty button{padding:7px 12px}
+input,textarea{width:100%;padding:12px;margin:6px 0 12px;border:1px solid #d8c6b2;border-radius:8px;font:inherit}
+.muted{color:#776b60;font-size:14px}
+.total{font-size:20px;font-weight:bold;display:flex;justify-content:space-between;margin:16px 0}
+#message{font-weight:bold;color:#386b40}
+footer{text-align:center;padding:24px;color:#776b60;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+<h1>The Canvas Caffe</h1>
+<p>Good coffee. Good food. Good company.</p>
+</header>
+<main>
+<div class="card">
+<h2 id="table">Welcome!</h2>
+<p class="muted">Browse our menu and choose what you would like to order.</p>
+</div>
 
+<div class="card">
+<h2>☕ Coffee & Beverages</h2>
+<div id="menu"></div>
+</div>
+
+<div class="card">
+<h2>Your Order</h2>
+<div id="cart">Your basket is empty.</div>
+<div class="total"><span>Total</span><span id="total">₹0</span></div>
+<label for="notes">Special instructions (optional)</label>
+<textarea id="notes" rows="2" placeholder="Less sugar, extra cheese..."></textarea>
+<button onclick="placeOrder()">Place Order</button>
+<p id="message"></p>
+<p class="muted">Please confirm your order with our staff. Online order transmission will be enabled after database setup.</p>
+</div>
+</main>
+<footer>Thank you for visiting The Canvas Caffe ❤️</footer>
+<script>
+const tableNo=new URLSearchParams(location.search).get("table");
+document.getElementById("table").textContent=tableNo?"Your Table: "+tableNo:"Welcome to The Canvas Caffe";
+const products=[
+{id:1,name:"Masala Chai",desc:"Indian spiced tea",price:50},
+{id:2,name:"Cold Coffee",desc:"Chilled coffee",price:110},
+{id:3,name:"Cappuccino",desc:"Espresso with milk foam",price:120},
+{id:4,name:"Hot Chocolate",desc:"Rich chocolate drink",price:130},
+{id:5,name:"Veg Sandwich",desc:"Grilled vegetable sandwich",price:140},
+{id:6,name:"French Fries",desc:"Crispy golden fries",price:100}
+];
+const cart={};
+const money=n=>"₹"+n.toLocaleString("en-IN");
+function render(){
+document.getElementById("menu").innerHTML=products.map(p=>'<div class="item"><div><strong>'+p.name+'</strong><div class="muted">'+p.desc+'</div><div class="price">'+money(p.price)+'</div></div><div class="qty"><button onclick="change('+p.id+',-1)">−</button> '+(cart[p.id]||0)+' <button onclick="change('+p.id+',1)">+</button></div></div>').join("");
+const chosen=products.filter(p=>cart[p.id]);
+document.getElementById("cart").innerHTML=chosen.length?chosen.map(p=>'<div class="item"><span>'+p.name+' × '+cart[p.id]+'</span><strong>'+money(p.price*cart[p.id])+'</strong></div>').join(""):"Your basket is empty.";
+document.getElementById("total").textContent=money(chosen.reduce((s,p)=>s+p.price*cart[p.id],0));
+}
+function change(id,n){cart[id]=Math.max(0,(cart[id]||0)+n);if(!cart[id])delete cart[id];render();}
+function placeOrder(){
+if(!products.some(p=>cart[p.id])){document.getElementById("message").textContent="Please add an item first.";return;}
+const order={table:tableNo||"Not specified",items:products.filter(p=>cart[p.id]).map(p=>p.name+" × "+cart[p.id]),total:products.reduce((s,p)=>s+p.price*(cart[p.id]||0),0),notes:document.getElementById("notes").value};
+const text="THE CANVAS CAFFE\nTable: "+order.table+"\n"+order.items.join("\n")+"\nTotal: "+money(order.total)+"\nInstructions: "+(order.notes||"None");
+const blob=new Blob([text],{type:"text/plain"});
+const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="Canvas-Caffe-Order.txt";a.click();URL.revokeObjectURL(a.href);
+document.getElementById("message").textContent="Order summary downloaded. Please show it to our staff.";
+}
+render();
+</script>
+</body>
+</html>
